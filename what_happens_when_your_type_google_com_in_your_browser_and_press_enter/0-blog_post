@@ -1,1 +1,51 @@
+# What happens when you type https://www.google.com and press Enter?
 
+Blog post URL: [ADD YOUR PUBLISHED MEDIUM/LINKEDIN URL HERE]
+
+---
+
+It's one of the oldest interview questions in software engineering, and for good reason: answering it well means you understand nearly the entire web stack at once — networking, security, and the servers behind the scenes. Here's the full journey, from the moment you press Enter to the moment the page appears on your screen.
+
+## 1. The DNS request
+
+Your browser can't talk to "www.google.com" directly — the internet routes traffic using IP addresses, not names. So the very first thing that happens is a **DNS (Domain Name System) lookup**.
+
+The browser checks its own cache first, then the operating system's cache, then asks a DNS resolver (usually provided by your ISP or a public one like 8.8.8.8). That resolver walks the DNS hierarchy — starting at a root server, then a `.com` TLD server, then Google's own authoritative name servers — until it finds the record that maps `www.google.com` to an IP address. That answer gets cached along the way (with a TTL) so the next lookup is fast.
+
+## 2. TCP/IP
+
+Now that the browser has an IP address, it needs to actually establish a connection to that server. This happens over **TCP/IP**, the pair of protocols the internet runs on.
+
+IP handles addressing and routing — getting packets from your machine to the destination machine across however many networks sit in between. TCP sits on top of it and handles reliability: it opens a connection with a **three-way handshake** (SYN, SYN-ACK, ACK), then guarantees that the data sent afterward arrives in order and without loss, retransmitting anything that gets dropped along the way.
+
+## 3. Firewall
+
+Somewhere along that path — usually right at the edge of Google's network — the request passes through a **firewall**. The firewall inspects incoming traffic against a set of rules and decides what's allowed through and what isn't, based on things like source IP, port, and protocol. It's the first line of defense, blocking obviously malicious or unauthorized traffic before it ever reaches a server that could act on it.
+
+## 4. HTTPS/SSL
+
+Because the URL starts with `https://`, the browser and server now perform a **TLS/SSL handshake** before any actual web content is exchanged. The server presents its SSL certificate, the browser verifies it against a trusted certificate authority (confirming it's really talking to Google and not an impostor), and the two sides agree on encryption keys for the session.
+
+From this point on, everything sent between browser and server is encrypted. This matters because without it, anyone able to observe the network traffic — on public Wi-Fi, for instance — could read or tamper with the request, including anything sensitive like login credentials.
+
+## 5. Load balancer
+
+Google obviously isn't running `www.google.com` off a single machine. The encrypted request lands on a **load balancer** first, whose job is to spread incoming traffic across many servers rather than letting any one of them get overwhelmed. It also means that if one backend server goes down, the load balancer simply stops sending it traffic and the site keeps running. Depending on configuration, the load balancer might also be the point where SSL is terminated before the request is passed along internally.
+
+## 6. Web server
+
+The request is handed to a **web server** (something like Nginx or Apache). Its job is to handle the raw HTTP(S) request: serve static assets directly if that's all that's needed, or, for anything dynamic, pass the request on to the application layer. Think of it as the front door — the first piece of software that actually parses your HTTP request.
+
+## 7. Application server
+
+For a page like Google's search results, static files alone aren't enough — the response has to be generated on the fly. That's the job of the **application server**: it runs the actual application code, processes the request (in this case, likely just serving the search homepage, or handling a query if one was included), and decides what data needs to be fetched to build the response.
+
+## 8. Database
+
+If the requested page needs data — user preferences, search results, account info — the application server queries a **database**. The database stores and returns the structured data the application needs, and the application server uses that data to assemble the final HTML (or JSON, for an API) response.
+
+## Back to the browser
+
+That response now travels back the way it came — through the application server, web server, and load balancer, back across the internet to your machine — and your browser starts parsing the HTML, fetching any additional resources (CSS, JS, images), and rendering the page. All of this — DNS lookup, TCP handshake, firewall check, TLS handshake, load balancing, and the full web/app/database chain — typically happens in well under a second.
+
+It's a lot of moving parts for something that feels instantaneous, which is exactly why this question is such a good way to check whether someone actually understands how the web works under the hood.
